@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geolocalización y Carga de Imágenes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        h2 {
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 5px;
+            color: #0056b3;
+        }
+        .info-box {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        #image-container img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .error {
+            color: #d9534f;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        button {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #004494;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>APIs de HTML5</h1>
+
+        <h2>1. Geolocalización del Usuario</h2>
+        <div class="info-box" id="geo-info">
+            Obteniendo tu ubicación actual...
+        </div>
+
+        <h2>2. Subir y Mostrar una Imagen</h2>
+        <input type="file" id="file-input" accept="image/*" style="display: none;">
+        <button id="upload-btn">Seleccionar Imagen</button>
+        
+        <div id="file-error" class="error"></div>
+        <div id="image-container"></div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. API DE GEOLOCALIZACIÓN
+        // ==========================================
+        const geoInfo = document.getElementById('geo-info');
+
+        // Verificamos si el navegador soporta geolocalización
+        if ('geolocation' in navigator) {
+            
+            // Objeto de configuración 
+            const config = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            };
+
+            // Llamada a la API
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    geoInfo.innerHTML = `<strong>Latitud:</strong> ${lat} <br> <strong>Longitud:</strong> ${lon}`;
+                },
+                (error) => {
+                    // Manejo de errores
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            geoInfo.textContent = "Error (1): El usuario denegó el permiso de ubicación.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            geoInfo.textContent = "Error (2): La ubicación no está disponible.";
+                            break;
+                        case error.TIMEOUT:
+                            geoInfo.textContent = "Error (3): Tiempo de espera excedido.";
+                            break;
+                        default:
+                            geoInfo.textContent = "Ocurrió un error desconocido al intentar obtener la ubicación.";
+                    }
+                },
+                config
+            );
+        } else {
+            geoInfo.textContent = "Tu navegador no soporta la API de Geolocalización.";
+        }
+
+
+        // ==========================================
+        // 2. API FILE Y FILEREADER
+        // ==========================================
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const imageContainer = document.getElementById('image-container');
+        const fileError = document.getElementById('file-error');
+
+        // Enlazar el botón visible con el input oculto
+        uploadBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Evento que se dispara al seleccionar un archivo
+        fileInput.addEventListener('change', (event) => {
+            fileError.textContent = ""; 
+            imageContainer.innerHTML = ""; 
+
+            const file = event.target.files[0];
+
+            if (file) {
+                // Validación estricta por JavaScript evaluando el tipo MIME
+                if (!file.type.startsWith('image/')) {
+                    fileError.textContent = "Archivo inválido. Por favor, selecciona únicamente un archivo de imagen (ej. JPG, PNG).";
+                    return;
+                }
+
+                // Instanciación del lector de archivos asíncrono
+                const reader = new FileReader();
+
+                // Evento disparado en caso de éxito al terminar la carga
+                reader.addEventListener('load', (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result; 
+                    imageContainer.appendChild(img);
+                });
+
+                // Evento disparado cuando la carga ha fallado
+                reader.addEventListener('error', () => {
+                    fileError.textContent = "Ocurrió un error al intentar leer el archivo.";
+                });
+
+                // Leer el archivo como URL de datos (Base64) para insertarlo en el src del img
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>
